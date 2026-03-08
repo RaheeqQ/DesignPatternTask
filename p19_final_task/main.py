@@ -90,24 +90,32 @@ class Invoker:
             print("Nothing to redo")
 
 
+class Context:
+    def __init__(self, loglevel):
+        self.loglevel = loglevel
+    def set_strategy(self, new_strategy):
+        self.loglevel = new_strategy
+    def log(self, message):
+        return self.loglevel.message_level(message)
+
 class LogLevels(ABC):
     @abstractmethod
     def message_level(self, message):
         pass
 
 
-class DebugLevel:
+class DebugLevel(LogLevels):
     def message_level(self, message):
         print(f"[DEBUG] {time.strftime('%H:%M:%S')}: {message}")
 
 
-class InfoLevel:
-    def message(self, message):
+class InfoLevel(LogLevels):
+    def message_level(self, message):
         print(f"[INFO] {time.strftime('%H:%M:%S')}: {message}")
 
 
-class ErrorLevel:
-    def message(self, message):
+class ErrorLevel(LogLevels):
+    def message_level(self, message):
         print(f"[ERROR] {time.strftime('%H:%M:%S')}: {message}")
 
 
@@ -173,6 +181,9 @@ def main():
     invoker.change_status(cmd1)
     invoker.undo_status()
     invoker.redo_status()
+
+    context = Context(ErrorLevel())
+    context.log("ERROR MESSAGE")
 
 if __name__ == "__main__":
     main()
