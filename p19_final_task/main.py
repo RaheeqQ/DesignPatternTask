@@ -16,6 +16,7 @@ class Order:
         self.status = "Created"
 
 
+# decorator pattern 
 class BeforeProcessing:
     def __init__(self, wrapped):
         self._wrapped = wrapped
@@ -41,6 +42,7 @@ class OrderProcessor:
         subject.send_notifications(order)
 
 
+# command pattern
 class Command(ABC):
     def __init__(self, receiver):
         self.receiver = receiver
@@ -90,6 +92,7 @@ class Invoker:
             print("Nothing to redo")
 
 
+# strategy pattern 
 class Context:
     def __init__(self, loglevel):
         self.loglevel = loglevel
@@ -119,6 +122,7 @@ class ErrorLevel(LogLevels):
         print(f"[ERROR] {time.strftime('%H:%M:%S')}: {message}")
 
 
+# observer pattern 
 class Subject:
     def __init__(self):
         self.observers = []
@@ -160,30 +164,42 @@ class PushService(Services):
         print(f"[Push] Sent to {user.name}: {msg}")
 
 
+# facade pattern 
+class Facade:
+    def __init__(self):
+        self.user = User("Bob")
+        self.order = Order(1001, self.user)
+        self.subject = Subject()
+        self.processor = BeforeProcessing(AfterProcessing(OrderProcessor()))
+        self.invoker = Invoker()
+        self.context = Context(DebugLevel())
+    def notify_order(self):
+        observer1 = EmailService()
+        observer2 = SMSService()
+        observer3 = PushService()
+
+        self.subject.attach(observer1)
+        self.subject.attach(observer2)
+        self.subject.attach(observer3)
+
+        self.processor.process_order(self.order, self.subject)
+    def order_status(self):
+        cmd1 = OrderStatus(self.order, "Shipped")
+        self.invoker.change_status(cmd1)
+        self.invoker.undo_status()
+        self.invoker.redo_status()
+    def log(self):
+        self.context.set_strategy(ErrorLevel())
+        self.context.log("ERROR MESSAGE")
+
+
+
+# main function
 def main():
-    user = User("Bob")
-    order = Order(1001, user)
-
-    subject = Subject()
-    observer1 = EmailService()
-    observer2 = SMSService()
-    observer3 = PushService()
-
-    subject.attach(observer1)
-    subject.attach(observer2)
-    subject.attach(observer3)
-
-    processor = BeforeProcessing(AfterProcessing(OrderProcessor()))
-    processor.process_order(order, subject)
-
-    invoker = Invoker()
-    cmd1 = OrderStatus(order, "Shipped")
-    invoker.change_status(cmd1)
-    invoker.undo_status()
-    invoker.redo_status()
-
-    context = Context(ErrorLevel())
-    context.log("ERROR MESSAGE")
+    facade = Facade()
+    facade.notify_order()
+    facade.order_status()
+    facade.log() 
 
 if __name__ == "__main__":
     main()
