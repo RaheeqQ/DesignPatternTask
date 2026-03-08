@@ -36,7 +36,8 @@ class AfterProcessing:
 class OrderProcessor:
     def process_order(self, order, subject):
         print(f"Processing order {order.order_id} for user {order.user.name}")
-        time.sleep(1)
+        delay = Delay()
+        delay.set_time(1)
         order.status = "Processed"
         print(f"Order {order.order_id} processed")
         subject.send_notifications(order)
@@ -192,6 +193,10 @@ class Facade:
         self.context.log("ERROR MESSAGE")
 
 
+# handle asynchronous or delayed operations
+class Delay:
+    def set_time(self, seconds):
+        time.sleep(seconds)
 
 # main function
 def main():
