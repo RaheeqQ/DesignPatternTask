@@ -33,41 +33,82 @@ class AfterProcessing:
 
 
 class OrderProcessor:
-    def __init__(self):
-        self.history = []
-        self.redo_stack = []
     def process_order(self, order, subject):
         print(f"Processing order {order.order_id} for user {order.user.name}")
         time.sleep(1)
         order.status = "Processed"
         print(f"Order {order.order_id} processed")
         subject.send_notifications(order)
-    def change_status(self, order, new_status):
-        prev_status = order.status
-        order.status = new_status
-        self.history.append((order, prev_status))
+
+
+class Command(ABC):
+    def __init__(self, receiver):
+        self.receiver = receiver
+    @abstractmethod
+    def change_status(self):
+        pass
+    @abstractmethod
+    def undo_status(self):
+        pass
+
+
+class OrderStatus(Command):
+    def __init__(self, order, new_status):
+        self.order = order
+        self.prev_state = None
+        self.new_status = new_status
+    def change_status(self):
+        self.prev_status = self.order.status
+        self.order.status = self.new_status
+        print(f"Order {self.order.order_id} status changed to {self.new_status}")
+    def undo_status(self):
+        self.order.status = self.prev_status
+        print(f"Undo: Order {self.order.order_id} status reverted to {self.prev_status}")
+
+
+class Invoker:
+    def __init__(self):
+        self.history = []
+        self.redo_stack = []
+    def change_status(self, command):
+        command.change_status()
+        self.history.append(command)
         self.redo_stack.clear()
-        print(f"Order {order.order_id} status changed to {new_status}")
     def undo_status(self):
         if self.history:
-            order, prev_status = self.history.pop()
-
-            self.redo_stack.append((order, order.status))
-            order.status = prev_status
-            print(f"Undo: Order {order.order_id} status reverted to {prev_status}")
+            command = self.history.pop()
+            command.undo_status()
+            self.redo_stack.append(command)
         else:
             print("Nothing to undo")
     def redo_status(self):
         if self.redo_stack:
-            order, next_status = self.redo_stack.pop()
-            self.history.append((order, order.status))
-            order.status = next_status
-            print(f"Redo: Order {order.order_id} status changed to {next_status}")
+            command = self.redo_stack.pop()
+            command.change_status()
+            self.history.append(command)
         else:
             print("Nothing to redo")
-    def log(self, level, message):
-        if level in ("DEBUG", "INFO", "ERROR"):
-            print(f"[{level}] {time.strftime('%H:%M:%S')}: {message}")
+
+
+class LogLevels(ABC):
+    @abstractmethod
+    def message_level(self, message):
+        pass
+
+
+class DebugLevel:
+    def message_level(self, message):
+        print(f"[DEBUG] {time.strftime('%H:%M:%S')}: {message}")
+
+
+class InfoLevel:
+    def message(self, message):
+        print(f"[INFO] {time.strftime('%H:%M:%S')}: {message}")
+
+
+class ErrorLevel:
+    def message(self, message):
+        print(f"[ERROR] {time.strftime('%H:%M:%S')}: {message}")
 
 
 class Subject:
@@ -90,21 +131,21 @@ class Services(ABC):
         pass
 
 
-class EmailService:
+class EmailService(Services):
     def update(self, order):
         user = order.user
         msg = f"Your order {order.order_id} is now {order.status}"
         print(f"[Email] Sent to {user.name}: {msg}")
 
 
-class SMSService:
+class SMSService(Services):
     def update(self, order):
         user = order.user
         msg = f"Your order {order.order_id} is now {order.status}"
         print(f"[SMS] Sent to {user.name}: {msg}")
 
 
-class PushService:
+class PushService(Services):
     def update(self, order):
         user = order.user
         msg = f"Your order {order.order_id} is now {order.status}"
@@ -126,9 +167,12 @@ def main():
 
     processor = BeforeProcessing(AfterProcessing(OrderProcessor()))
     processor.process_order(order, subject)
-    processor._wrapped._wrapped.change_status(order, "Shipped")
-    processor._wrapped._wrapped.undo_status()
-    processor._wrapped._wrapped.redo_status()
+
+    invoker = Invoker()
+    cmd1 = OrderStatus(order, "Shipped")
+    invoker.change_status(cmd1)
+    invoker.undo_status()
+    invoker.redo_status()
 
 if __name__ == "__main__":
     main()
