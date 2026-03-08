@@ -174,13 +174,12 @@ class Facade:
         self.invoker = Invoker()
         self.context = Context(DebugLevel())
     def notify_order(self):
-        observer1 = EmailService()
-        observer2 = SMSService()
-        observer3 = PushService()
-
-        self.subject.attach(observer1)
-        self.subject.attach(observer2)
-        self.subject.attach(observer3)
+        if self.user.email_enabled:
+            self.subject.attach(EmailService())
+        if self.user.sms_enabled:
+            self.subject.attach(SMSService())
+        if self.user.push_enabled:
+            self.subject.attach(PushService())
 
         self.processor.process_order(self.order, self.subject)
     def order_status(self):
