@@ -16,6 +16,22 @@ class Order:
         self.status = "Created"
 
 
+class BeforeProcessing:
+    def __init__(self, wrapped):
+        self._wrapped = wrapped
+    def process_order(self, order, subject):
+        print("[BeforeProcessing]")
+        return self._wrapped.process_order(order, subject)
+
+
+class AfterProcessing:
+    def __init__(self, wrapped):
+        self._wrapped = wrapped
+    def process_order(self, order, subject):
+        print("[AfterProcessing]")
+        return self._wrapped.process_order(order, subject)
+
+
 class OrderProcessor:
     def __init__(self):
         self.history = []
@@ -108,11 +124,11 @@ def main():
     subject.attach(observer2)
     subject.attach(observer3)
 
-    processor = OrderProcessor()
+    processor = BeforeProcessing(AfterProcessing(OrderProcessor()))
     processor.process_order(order, subject)
-    processor.change_status(order, "Shipped")
-    processor.undo_status()
-    processor.redo_status()
+    processor._wrapped._wrapped.change_status(order, "Shipped")
+    processor._wrapped._wrapped.undo_status()
+    processor._wrapped._wrapped.redo_status()
 
 if __name__ == "__main__":
     main()
