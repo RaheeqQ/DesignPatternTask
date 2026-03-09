@@ -17,23 +17,24 @@ class Order:
 
 
 # decorator pattern 
-class BeforeProcessing:
-    def __init__(self, wrapped):
-        self._wrapped = wrapped
-    def process_order(self, order, subject):
-        print("[BeforeProcessing]")
-        return self._wrapped.process_order(order, subject)
+def before_processing(handler):
+    def wrapped(*args, **kwargs):
+        print("Checking [Before Processing] order processing")
+        return handler(*args, **kwargs) 
+    return wrapped
 
-
-class AfterProcessing:
-    def __init__(self, wrapped):
-        self._wrapped = wrapped
-    def process_order(self, order, subject):
-        print("[AfterProcessing]")
-        return self._wrapped.process_order(order, subject)
+    
+def after_processing(handler):
+    def wrapped(*args, **kwargs):
+        result = handler(*args, **kwargs)
+        print("Checking [After Processing] ended successfully")
+        return result
+    return wrapped
 
 
 class OrderProcessor:
+    @after_processing
+    @before_processing
     def process_order(self, order, subject):
         print(f"Processing order {order.order_id} for user {order.user.name}")
         delay = Delay()
@@ -171,7 +172,7 @@ class Facade:
         self.user = User("Bob")
         self.order = Order(1001, self.user)
         self.subject = Subject()
-        self.processor = BeforeProcessing(AfterProcessing(OrderProcessor()))
+        self.processor = OrderProcessor()
         self.invoker = Invoker()
         self.context = Context(DebugLevel())
     def notify_order(self):
