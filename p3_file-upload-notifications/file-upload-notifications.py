@@ -3,9 +3,9 @@ from abc import ABC, abstractmethod
 
 class Subject:
     def __init__(self):
-        self.observers = []
+        self.observers = set()
     def attach(self, observer):
-        self.observers.append(observer)
+        self.observers.add(observer)
     def detach(self, observer):
         self.observers.remove(observer)
     def notify(self, user, filename):
@@ -49,6 +49,7 @@ def main():
 
     subject.attach(observer1)
     subject.attach(observer2)
+    subject.attach(observer3)
     subject.attach(observer3)
 
     subject.upload_file("alice", "report.pdf")
