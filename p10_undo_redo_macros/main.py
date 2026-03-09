@@ -71,12 +71,19 @@ class Invoker:
         self.poped_commands = []
     def execute(self, cmd):
         self.commands.append(cmd)
+        self.poped_commands.clear()
         return cmd.execute()
     def undo(self):
+        if not self.commands:
+            print("Nothing to undo")
+            return ""
         last_command = self.commands.pop()
         self.poped_commands.append(last_command)
         return last_command.undo()
     def redo(self):
+        if not self.poped_commands:
+            print("Nothing to redo")
+            return ""
         last_command = self.poped_commands.pop()
         self.commands.append(last_command)
         return last_command.execute()
@@ -101,6 +108,11 @@ if __name__ == "__main__":
 
     document = invoker.undo()
     print(document)
+    document = invoker.undo()
+    print(document)
+    document = invoker.undo()
+    print(document)
+    document = invoker.undo()
 
     document = invoker.redo()
     print(document)
@@ -110,6 +122,7 @@ if __name__ == "__main__":
     macro = MacroCommand([cmd1, cmd2])
     document = invoker.execute(macro)
     print(document)
+    document = invoker.redo()
 
     document = invoker.undo()
     print(document)
