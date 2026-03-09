@@ -1,32 +1,33 @@
 # adapter method
-class StripeGateway:
+from abc import ABC, abstractmethod
+
+
+class Gateway(ABC):
+    @abstractmethod
+    def process_payment(self, amount):
+        pass
+
+
+class StripeGateway(Gateway):
     def process_payment(self, amount):
         print(f"Charging ${amount} with Stripe")
 
 
-class PayPalGateway:
+class PayPalGateway(Gateway):
     def process_payment(self, amount):
         print(f"Processing ${amount} with PayPal")
 
 
-class LocalBankAPIGateway:
+class LocalBankAPIGateway(Gateway):
     def process_payment(self, amount):
         print(f"Handling ${amount} with LocalBankAPI")
 
 
-class Adapter:
-    def __init__(self, obj, **adapted_methods):
-        self.obj = obj 
-        for key, value in adapted_methods.items():
-            setattr(self, key, value)
+def checkout(processor: Gateway, amount): 
+    processor.process_payment(amount)
+
 
 if __name__ == "__main__":
-    objects = []
-    stripeGateway = StripeGateway()
-    objects.append(Adapter(stripeGateway, charge = stripeGateway.process_payment))
-    paypalGateway = PayPalGateway()
-    objects.append(Adapter(paypalGateway, charge = paypalGateway.process_payment))
-    localGateway = LocalBankAPIGateway()
-    objects.append(Adapter(localGateway, charge = localGateway.process_payment))
-    for obj in objects:
-        obj.charge(100)
+    checkout(StripeGateway(), 99.9)
+    checkout(PayPalGateway(), 99.9)
+    checkout(LocalBankAPIGateway(), 1000)
