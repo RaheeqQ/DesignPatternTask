@@ -30,11 +30,10 @@ class Facade:
     def fetch_data(self, key, table):
         if self.cache.get(key):
             return print(f"{key} inside the cache: {self.cache.get(key)}")
+        elif self.db.fetch(table, key):
+            return print(f"{key} not in the cache, but inside the DB: {self.db.fetch(table, key)}")
         else:
-            if self.db.fetch(table, key):
-                return print(f"{key} not in the cache, but inside the DB: {self.db.fetch(table, key)}")
-            else:
-                return print(f"{key} not in the cache and DB, call API: {self.api.call(key)}")
+            return print(f"{key} not in the cache and DB, call API: {self.api.call(key)}")
 
 
 if __name__ == "__main__":
