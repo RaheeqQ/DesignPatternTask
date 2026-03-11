@@ -1,21 +1,8 @@
 # DesignPatternTask
-```python
-# 🎯 Problem 8 — Endpoint Cross-Cutting Concerns
-
-Each REST handler manually performs auth, rate-limit, logging, etc.
-
-## Requirements
-• Attach behaviours to a handler dynamically, without editing its source.  
-• Allow stacking behaviours in any order.  
-• Reuse the unmodified handler elsewhere.  
-
-## Ugly Starter Code
-
-def handle_request():
-    print("Validating auth")
-    print("Checking rate limits")
-    print("Logging request")
-    print("Processing request")
-
-handle_request()
-```
+## Documentation of Solutions
+For every problem, the appropriate design pattern was selected based on the requirements.  
+The documentation briefly describes:
+- The design pattern used
+- Why this pattern was chosen
+- How the solution works in the code
+#### https://drive.google.com/file/d/1w8hd_T4kBNQXiOLaERCvwcKu2Wl65soI/view?usp=drive_link
