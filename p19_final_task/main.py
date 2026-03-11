@@ -33,8 +33,8 @@ def after_processing(handler):
 
 
 class OrderProcessor:
-    @after_processing
     @before_processing
+    @after_processing
     def process_order(self, order, subject):
         print(f"Processing order {order.order_id} for user {order.user.name}")
         delay = Delay()
@@ -46,8 +46,6 @@ class OrderProcessor:
 
 # command pattern
 class Command(ABC):
-    def __init__(self, receiver):
-        self.receiver = receiver
     @abstractmethod
     def change_status(self):
         pass
@@ -59,7 +57,7 @@ class Command(ABC):
 class OrderStatus(Command):
     def __init__(self, order, new_status):
         self.order = order
-        self.prev_state = None
+        self.prev_status = None
         self.new_status = new_status
     def change_status(self):
         self.prev_status = self.order.status
@@ -148,22 +146,25 @@ class Services(ABC):
 class EmailService(Services):
     def update(self, order):
         user = order.user
-        msg = f"Your order {order.order_id} is now {order.status}"
-        print(f"[Email] Sent to {user.name}: {msg}")
+        if user.email_enabled:
+            msg = f"Your order {order.order_id} is now {order.status}"
+            print(f"[Email] Sent to {user.name}: {msg}")
 
 
 class SMSService(Services):
     def update(self, order):
         user = order.user
-        msg = f"Your order {order.order_id} is now {order.status}"
-        print(f"[SMS] Sent to {user.name}: {msg}")
+        if user.sms_enabled:
+            msg = f"Your order {order.order_id} is now {order.status}"
+            print(f"[SMS] Sent to {user.name}: {msg}")
 
 
 class PushService(Services):
     def update(self, order):
         user = order.user
-        msg = f"Your order {order.order_id} is now {order.status}"
-        print(f"[Push] Sent to {user.name}: {msg}")
+        if user.push_enabled:
+            msg = f"Your order {order.order_id} is now {order.status}"
+            print(f"[Push] Sent to {user.name}: {msg}")
 
 
 # facade pattern 
@@ -176,12 +177,9 @@ class Facade:
         self.invoker = Invoker()
         self.context = Context(DebugLevel())
     def notify_order(self):
-        if self.user.email_enabled:
-            self.subject.attach(EmailService())
-        if self.user.sms_enabled:
-            self.subject.attach(SMSService())
-        if self.user.push_enabled:
-            self.subject.attach(PushService())
+        self.subject.attach(EmailService())
+        self.subject.attach(SMSService())
+        self.subject.attach(PushService())
 
         self.processor.process_order(self.order, self.subject)
     def order_status(self):
